@@ -1,0 +1,3 @@
+-- Категории event_types уже в 001, эта миграция для будущих расширений
+-- Оставь пустой или добавь: ALTER TABLE users ADD COLUMN IF NOT EXISTS ...
+SELECT 1; -- placeholder
