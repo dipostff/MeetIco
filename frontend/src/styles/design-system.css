@@ -1,0 +1,158 @@
+:root {
+  /* Цвета */
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F5F4F0;
+  --color-border: #E8E6E0;
+  --color-border-soft: #F0EEE8;
+
+  --color-text-primary: #1A1917;
+  --color-text-secondary: #6B6860;
+  --color-text-muted: #9E9B94;
+
+  --color-accent: #2D6A4F;
+  --color-accent-light: #E8F5EE;
+  --color-accent-hover: #245A42;
+
+  --color-error: #DC2626;
+  --color-success: #16A34A;
+
+  /* Типографика */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* Отступы */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Радиусы */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+
+  /* Тени */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+
+  /* Переходы */
+  --t-fast: 150ms ease;
+  --t-normal: 250ms ease;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Кнопки */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.btn-secondary {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+.btn-secondary:hover {
+  background: var(--color-border-soft);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.btn-ghost:hover {
+  background: var(--color-surface-2);
+}
+.btn-danger {
+  background: #FEE2E2;
+  color: var(--color-error);
+}
+.btn-danger:hover {
+  background: #FECACA;
+}
+
+/* Карточки */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Инпуты */
+.input {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: border-color var(--t-fast);
+  outline: none;
+}
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--sp-2);
+}
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-border-soft) 50%, var(--color-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--r-md);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
