@@ -19,12 +19,12 @@ func NewBookingsRepo(pool *pgxpool.Pool) *BookingsRepo {
 
 func (r *BookingsRepo) Create(ctx context.Context, booking *model.Booking) error {
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO bookings (event_type_id, candidate_name, candidate_email, starts_at, ends_at, cancel_token) 
-		 VALUES ($1, $2, $3, $4, $5, $6) 
-		 RETURNING id, created_at`,
+		`INSERT INTO bookings (event_type_id, candidate_name, candidate_email, starts_at, ends_at)
+		 VALUES ($1, $2, $3, $4, $5)
+		 RETURNING id, cancel_token, created_at`,
 		booking.EventTypeID, booking.CandidateName, booking.CandidateEmail,
-		booking.StartsAt, booking.EndsAt, booking.CancelToken,
-	).Scan(&booking.ID, &booking.CreatedAt)
+		booking.StartsAt, booking.EndsAt,
+	).Scan(&booking.ID, &booking.CancelToken, &booking.CreatedAt)
 	return err
 }
 

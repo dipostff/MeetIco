@@ -16,14 +16,16 @@ import (
 )
 
 type AuthHandler struct {
-	usersRepo *repo.UsersRepo
-	jwtSecret string
+	usersRepo     *repo.UsersRepo
+	schedulesRepo *repo.SchedulesRepo
+	jwtSecret     string
 }
 
-func NewAuthHandler(usersRepo *repo.UsersRepo, jwtSecret string) *AuthHandler {
+func NewAuthHandler(usersRepo *repo.UsersRepo, schedulesRepo *repo.SchedulesRepo, jwtSecret string) *AuthHandler {
 	return &AuthHandler{
-		usersRepo: usersRepo,
-		jwtSecret: jwtSecret,
+		usersRepo:     usersRepo,
+		schedulesRepo: schedulesRepo,
+		jwtSecret:     jwtSecret,
 	}
 }
 
@@ -64,6 +66,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
+	}
+
+	if err := h.schedulesRepo.EnsureDefault(r.Context(), user.ID); err != nil {
+		log.Printf("failed to create default schedule for %s: %v", user.ID, err)
 	}
 
 	token, err := h.generateToken(user.ID)
@@ -113,7 +119,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	userID := r.Header.Get("X-User-ID")
 	user, err := h.usersRepo.GetByID(r.Context(), userID)
 	if err != nil {
@@ -121,7 +126,7 @@ func (h *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(user)
+	writeJSON(w, http.StatusOK, user)
 }
 
 type UpdateMeRequest struct {
@@ -152,7 +157,7 @@ func (h *AuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(user)
+	writeJSON(w, http.StatusOK, user)
 }
 
 type ChangePasswordRequest struct {

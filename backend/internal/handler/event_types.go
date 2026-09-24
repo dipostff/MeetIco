@@ -6,6 +6,8 @@ import (
 
 	"meetico/internal/model"
 	"meetico/internal/repo"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type EventTypesHandler struct {
@@ -73,7 +75,7 @@ type UpdateEventTypeRequest struct {
 }
 
 func (h *EventTypesHandler) UpdateEventType(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/api/event-types/"):]
+	id := chi.URLParam(r, "id")
 	userID := r.Header.Get("X-User-ID")
 	var req UpdateEventTypeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -108,7 +110,7 @@ func (h *EventTypesHandler) UpdateEventType(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *EventTypesHandler) DeleteEventType(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/api/event-types/"):]
+	id := chi.URLParam(r, "id")
 	userID := r.Header.Get("X-User-ID")
 
 	eventType, err := h.eventTypesRepo.GetByID(r.Context(), id)

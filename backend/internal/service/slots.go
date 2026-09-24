@@ -41,7 +41,7 @@ func (s *SlotsService) GetAvailableSlots(ctx context.Context, userID string, dat
 
 	schedule, err := s.schedulesRepo.GetByUserID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return []string{}, nil
 	}
 
 	recruiterLoc, err := time.LoadLocation(schedule.Timezone)

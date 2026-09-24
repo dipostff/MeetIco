@@ -35,8 +35,9 @@
               type="text" 
               class="input" 
               placeholder="ivanov"
-              pattern="[a-z0-9_-]{3,30}"
               required
+              minlength="3"
+              maxlength="30"
             />
             <span class="hint">Только буквы, цифры, _ и -. 3-30 символов</span>
           </div>
@@ -242,6 +243,13 @@ const removeInterval = (day, index) => {
 }
 
 const saveProfile = async () => {
+  const username = profileForm.username?.trim() || ''
+  if (!/^[a-z0-9_-]{3,30}$/.test(username)) {
+    alert('Username: 3–30 символов, только латиница, цифры, дефис и подчёркивание')
+    return
+  }
+  profileForm.username = username
+
   const success = await authStore.updateProfile(profileForm)
   if (success) {
     alert('Профиль сохранен!')

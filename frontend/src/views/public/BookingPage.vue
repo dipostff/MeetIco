@@ -15,7 +15,7 @@
       </div>
 
       <!-- Date Selection -->
-      <div class="date-selection">
+      <div v-if="!bookingSuccess" class="date-selection">
         <h3>Выберите дату</h3>
         <div class="dates-scroll">
           <button 
@@ -36,7 +36,7 @@
       </div>
 
       <!-- Time Slots -->
-      <div v-if="selectedDate" class="time-slots">
+      <div v-if="!bookingSuccess && selectedDate" class="time-slots">
         <h3>Доступное время — {{ selectedDateFormatted }}</h3>
         <div v-if="loadingSlots" class="slots-loading">
           <div class="skeleton" style="height: 40px; width: 100px; margin-right: var(--sp-2);"></div>
@@ -60,7 +60,7 @@
       </div>
 
       <!-- Booking Form -->
-      <div v-if="selectedSlot" class="booking-form">
+      <div v-if="!bookingSuccess && selectedSlot" class="booking-form">
         <h3>Ваши данные</h3>
         <div class="form-group">
           <label class="label">Имя</label>
@@ -165,26 +165,35 @@ const formatDateForCalendar = (date) => {
 const generateDates = () => {
   const dates = []
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   
   for (let i = 0; i < 14; i++) {
     const date = new Date(today)
     date.setDate(today.getDate() + i)
     
     dates.push({
-      date: date.toISOString().split('T')[0],
+      date: formatLocalDate(date),
       day: date.toLocaleDateString('ru-RU', { weekday: 'short' }),
       number: date.getDate(),
-      hasSlots: true // Will be updated after loading slots
+      hasSlots: true
     })
   }
   
   availableDates.value = dates
 }
 
+const formatLocalDate = (date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 const selectDate = async (date) => {
   selectedDate.value = date
   selectedSlot.value = null
   loadingSlots.value = true
+  error.value = ''
   
   try {
     const response = await publicApi.getPublicSlots(username, slug, {
@@ -192,16 +201,19 @@ const selectDate = async (date) => {
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone
     })
     
-    slots.value = response.data.slots || []
+    slots.value = Array.isArray(response.data?.slots) ? response.data.slots : []
     
-    // Update hasSlots for the selected date
     const dateIndex = availableDates.value.findIndex(d => d.date === date)
     if (dateIndex !== -1) {
       availableDates.value[dateIndex].hasSlots = slots.value.length > 0
     }
   } catch (err) {
-    error.value = 'Не удалось загрузить слоты'
     slots.value = []
+    if (err.response?.status === 429) {
+      error.value = 'Слишком много запросов, подождите немного'
+    } else {
+      error.value = 'Не удалось загрузить слоты'
+    }
   } finally {
     loadingSlots.value = false
   }

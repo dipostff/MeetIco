@@ -85,8 +85,8 @@
               class="input" 
               placeholder="30min"
               required
-              pattern="[a-z0-9_-]+"
             />
+            <span class="hint">Только латиница, цифры, дефис и подчёркивание</span>
           </div>
           <div class="form-group">
             <label class="label">Длительность (мин)</label>
@@ -166,10 +166,21 @@ const publicLink = (eventType) => {
   return username ? `${window.location.origin}/book/${username}/${eventType.slug}` : ''
 }
 
-const copyLink = (eventType) => {
+const copyLink = async (eventType) => {
+  if (!authStore.user) {
+    await authStore.fetchUser()
+  }
   const link = publicLink(eventType)
-  navigator.clipboard.writeText(link)
-  alert('Ссылка скопирована!')
+  if (!link) {
+    alert('Сначала укажите username в Настройках')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(link)
+    alert('Ссылка скопирована!')
+  } catch {
+    prompt('Скопируйте ссылку вручную:', link)
+  }
 }
 
 const editEventType = (eventType) => {
@@ -195,6 +206,13 @@ const toggleEventType = async (eventType) => {
 }
 
 const handleSave = async () => {
+  const slug = formData.value.slug.trim()
+  if (!/^[a-z0-9_-]+$/.test(slug)) {
+    alert('Slug: только латиница, цифры, дефис и подчёркивание')
+    return
+  }
+  formData.value.slug = slug
+
   let success
   if (editingEventType.value) {
     success = await eventTypesStore.updateEventType(editingEventType.value.id, formData.value)
@@ -222,8 +240,11 @@ const resetForm = () => {
   }
 }
 
-onMounted(() => {
-  eventTypesStore.fetchEventTypes()
+onMounted(async () => {
+  await Promise.all([
+    eventTypesStore.fetchEventTypes(),
+    authStore.user ? Promise.resolve() : authStore.fetchUser()
+  ])
 })
 </script>
 

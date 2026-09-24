@@ -45,7 +45,8 @@ export const eventTypes = {
 
 // Bookings
 export const bookings = {
-  getBookings: () => api.get('/bookings')
+  getBookings: () => api.get('/bookings'),
+  cancelBooking: (id) => api.delete(`/bookings/${id}`)
 }
 
 // Public

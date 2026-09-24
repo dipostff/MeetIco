@@ -47,7 +47,7 @@ func (m *RateLimitMiddleware) Middleware(next http.Handler) http.Handler {
 		}
 		rlClient.timestamps = validTimestamps
 
-		if len(rlClient.timestamps) >= 10 {
+		if len(rlClient.timestamps) >= 60 {
 			http.Error(w, `{"error": "too many requests"}`, http.StatusTooManyRequests)
 			return
 		}

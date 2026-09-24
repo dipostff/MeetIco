@@ -57,10 +57,10 @@ func main() {
 	telegramNotifier := notify.NewBot(cfg.TelegramBotToken)
 	bookingService := service.NewBookingService(bookingsRepo, eventTypesRepo, usersRepo, notificationsRepo, schedulesRepo, slotsService, mailer, telegramNotifier)
 
-	authHandler := handler.NewAuthHandler(usersRepo, cfg.JWTSecret)
+	authHandler := handler.NewAuthHandler(usersRepo, schedulesRepo, cfg.JWTSecret)
 	scheduleHandler := handler.NewScheduleHandler(schedulesRepo)
 	eventTypesHandler := handler.NewEventTypesHandler(eventTypesRepo)
-	bookingsHandler := handler.NewBookingsHandler(bookingsRepo)
+	bookingsHandler := handler.NewBookingsHandler(bookingsRepo, bookingService)
 	publicHandler := handler.NewPublicHandler(usersRepo, eventTypesRepo, bookingsRepo, schedulesRepo, slotsService, bookingService)
 
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret)
@@ -84,10 +84,11 @@ func main() {
 
 		r.Get("/api/event-types", eventTypesHandler.GetEventTypes)
 		r.Post("/api/event-types", eventTypesHandler.CreateEventType)
-		r.Patch("/api/event-types/*", eventTypesHandler.UpdateEventType)
-		r.Delete("/api/event-types/*", eventTypesHandler.DeleteEventType)
+		r.Patch("/api/event-types/{id}", eventTypesHandler.UpdateEventType)
+		r.Delete("/api/event-types/{id}", eventTypesHandler.DeleteEventType)
 
 		r.Get("/api/bookings", bookingsHandler.GetBookings)
+		r.Delete("/api/bookings/{id}", bookingsHandler.CancelBooking)
 	})
 
 	r.Group(func(r chi.Router) {

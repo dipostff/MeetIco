@@ -8,7 +8,17 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import AppSidebar from '@/components/AppSidebar.vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+
+onMounted(() => {
+  if (authStore.token && !authStore.user) {
+    authStore.fetchUser()
+  }
+})
 </script>
 
 <style scoped>

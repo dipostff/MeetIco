@@ -1,8 +1,15 @@
 <template>
   <div class="cancel-page">
     <div class="cancel-card">
+      <!-- Cancelled Successfully -->
+      <div v-if="cancelSuccess" class="success-state">
+        <div class="icon">✓</div>
+        <h2>Встреча отменена</h2>
+        <p>{{ cancelInfo?.recruiter_display_name || 'Организатор' }} получил уведомление</p>
+      </div>
+
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
+      <div v-else-if="loading" class="loading-state">
         <div class="skeleton" style="height: 60px; width: 60px; border-radius: 50%; margin: 0 auto var(--sp-4);"></div>
         <div class="skeleton" style="height: 24px; width: 200px; margin: 0 auto var(--sp-2);"></div>
         <div class="skeleton" style="height: 16px; width: 300px; margin: 0 auto var(--sp-4);"></div>
@@ -51,13 +58,6 @@
         <p>Эта встреча была отменена ранее</p>
       </div>
 
-      <!-- Cancelled Successfully -->
-      <div v-else-if="cancelSuccess" class="success-state">
-        <div class="icon">✓</div>
-        <h2>Встреча отменена</h2>
-        <p>{{ cancelInfo.recruiter_display_name }} получил уведомление</p>
-      </div>
-
       <!-- Error -->
       <div v-else-if="error" class="error-state">
         <div class="icon">⚠️</div>
@@ -100,6 +100,9 @@ const handleCancel = async () => {
   
   try {
     await publicApi.cancelBooking(token)
+    if (cancelInfo.value) {
+      cancelInfo.value = { ...cancelInfo.value, status: 'cancelled' }
+    }
     cancelSuccess.value = true
   } catch (err) {
     error.value = err.response?.data?.error || 'Не удалось отменить встречу'

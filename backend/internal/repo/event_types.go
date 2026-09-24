@@ -29,7 +29,8 @@ func (r *EventTypesRepo) Create(ctx context.Context, eventType *model.EventType)
 
 func (r *EventTypesRepo) GetByUserID(ctx context.Context, userID string) ([]*model.EventType, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, user_id, slug, title, duration_min, location_type, location_value, category, is_active, created_at 
+		`SELECT id, user_id, slug, title, duration_min, location_type,
+		        COALESCE(location_value, ''), category, is_active, created_at 
 		 FROM event_types WHERE user_id = $1 ORDER BY created_at DESC`,
 		userID,
 	)
@@ -56,7 +57,8 @@ func (r *EventTypesRepo) GetByUserID(ctx context.Context, userID string) ([]*mod
 func (r *EventTypesRepo) GetByID(ctx context.Context, id string) (*model.EventType, error) {
 	var et model.EventType
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, user_id, slug, title, duration_min, location_type, location_value, category, is_active, created_at 
+		`SELECT id, user_id, slug, title, duration_min, location_type,
+		        COALESCE(location_value, ''), category, is_active, created_at 
 		 FROM event_types WHERE id = $1`,
 		id,
 	).Scan(
@@ -72,9 +74,27 @@ func (r *EventTypesRepo) GetByID(ctx context.Context, id string) (*model.EventTy
 func (r *EventTypesRepo) GetBySlug(ctx context.Context, slug string) (*model.EventType, error) {
 	var et model.EventType
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, user_id, slug, title, duration_min, location_type, location_value, category, is_active, created_at 
+		`SELECT id, user_id, slug, title, duration_min, location_type,
+		        COALESCE(location_value, ''), category, is_active, created_at 
 		 FROM event_types WHERE slug = $1`,
 		slug,
+	).Scan(
+		&et.ID, &et.UserID, &et.Slug, &et.Title, &et.DurationMin,
+		&et.LocationType, &et.LocationValue, &et.Category, &et.IsActive, &et.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &et, nil
+}
+
+func (r *EventTypesRepo) GetByUserIDAndSlug(ctx context.Context, userID, slug string) (*model.EventType, error) {
+	var et model.EventType
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, user_id, slug, title, duration_min, location_type,
+		        COALESCE(location_value, ''), category, is_active, created_at
+		 FROM event_types WHERE user_id = $1 AND slug = $2 AND is_active = TRUE`,
+		userID, slug,
 	).Scan(
 		&et.ID, &et.UserID, &et.Slug, &et.Title, &et.DurationMin,
 		&et.LocationType, &et.LocationValue, &et.Category, &et.IsActive, &et.CreatedAt,

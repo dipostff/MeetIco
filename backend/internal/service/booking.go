@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"meetico/internal/notify"
 	"meetico/internal/repo"
 )
+
+var ErrForbidden = errors.New("forbidden")
 
 type BookingService struct {
 	bookingsRepo      *repo.BookingsRepo
@@ -85,7 +88,6 @@ func (s *BookingService) CreateBooking(ctx context.Context, eventTypeID, candida
 		StartsAt:       startsAt,
 		EndsAt:         endsAt,
 		Status:         "confirmed",
-		CancelToken:    "",
 	}
 
 	err = s.bookingsRepo.Create(ctx, booking)
@@ -124,13 +126,32 @@ func (s *BookingService) CancelBooking(ctx context.Context, token string) error 
 	if err != nil {
 		return err
 	}
+	return s.cancelBooking(ctx, booking)
+}
 
+func (s *BookingService) CancelBookingByOwner(ctx context.Context, userID, bookingID string) error {
+	booking, err := s.bookingsRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	eventType, err := s.eventTypesRepo.GetByID(ctx, booking.EventTypeID)
+	if err != nil {
+		return err
+	}
+	if eventType.UserID != userID {
+		return ErrForbidden
+	}
+
+	return s.cancelBooking(ctx, booking)
+}
+
+func (s *BookingService) cancelBooking(ctx context.Context, booking *model.Booking) error {
 	if booking.Status == "cancelled" {
 		return nil
 	}
 
-	err = s.bookingsRepo.UpdateStatus(ctx, booking.ID, "cancelled")
-	if err != nil {
+	if err := s.bookingsRepo.UpdateStatus(ctx, booking.ID, "cancelled"); err != nil {
 		return err
 	}
 
@@ -149,8 +170,7 @@ func (s *BookingService) CancelBooking(ctx context.Context, token string) error 
 			"❌ <b>Встреча отменена</b>\n👤 %s\n🕐 %s",
 			booking.CandidateName, booking.StartsAt.Format("2 января в 15:04 МСК"),
 		)
-		err = s.telegramNotifier.SendMessage(user.TelegramChatID, msg)
-		if err != nil {
+		if err := s.telegramNotifier.SendMessage(user.TelegramChatID, msg); err != nil {
 			slog.Error("failed to send telegram notification", "error", err)
 		}
 	}

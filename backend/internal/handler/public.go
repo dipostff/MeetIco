@@ -7,6 +7,8 @@ import (
 
 	"meetico/internal/repo"
 	"meetico/internal/service"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type PublicHandler struct {
@@ -51,9 +53,8 @@ type PublicBookingResponse struct {
 }
 
 func (h *PublicHandler) GetPublicInfo(w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Path[len("/api/public/"):]
-	slugStart := len(username) + 1
-	slug := r.URL.Path[slugStart:]
+	username := chi.URLParam(r, "username")
+	slug := chi.URLParam(r, "slug")
 
 	user, err := h.usersRepo.GetByUsername(r.Context(), username)
 	if err != nil {
@@ -61,13 +62,13 @@ func (h *PublicHandler) GetPublicInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventType, err := h.eventTypesRepo.GetBySlug(r.Context(), slug)
+	eventType, err := h.eventTypesRepo.GetByUserIDAndSlug(r.Context(), user.ID, slug)
 	if err != nil {
 		http.Error(w, "Event type not found", http.StatusNotFound)
 		return
 	}
 
-	response := map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"recruiter": map[string]interface{}{
 			"display_name": user.DisplayName,
 			"photo_url":    user.PhotoURL,
@@ -80,16 +81,12 @@ func (h *PublicHandler) GetPublicInfo(w http.ResponseWriter, r *http.Request) {
 			"category":      eventType.Category,
 			"slug":          eventType.Slug,
 		},
-	}
-
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func (h *PublicHandler) GetPublicSlots(w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Path[len("/api/public/"):]
-	slugStart := len(username) + 1
-	slugEnd := slugStart + len(r.URL.Path[slugStart:])
-	slug := r.URL.Path[slugStart:slugEnd]
+	username := chi.URLParam(r, "username")
+	slug := chi.URLParam(r, "slug")
 
 	dateStr := r.URL.Query().Get("date")
 	tz := r.URL.Query().Get("tz")
@@ -111,7 +108,7 @@ func (h *PublicHandler) GetPublicSlots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventType, err := h.eventTypesRepo.GetBySlug(r.Context(), slug)
+	eventType, err := h.eventTypesRepo.GetByUserIDAndSlug(r.Context(), user.ID, slug)
 	if err != nil {
 		http.Error(w, "Event type not found", http.StatusNotFound)
 		return
@@ -132,10 +129,8 @@ func (h *PublicHandler) GetPublicSlots(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PublicHandler) CreatePublicBooking(w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Path[len("/api/public/"):]
-	slugStart := len(username) + 1
-	slugEnd := slugStart + len(r.URL.Path[slugStart:])
-	slug := r.URL.Path[slugStart:slugEnd]
+	username := chi.URLParam(r, "username")
+	slug := chi.URLParam(r, "slug")
 
 	var req PublicBookingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -143,7 +138,13 @@ func (h *PublicHandler) CreatePublicBooking(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	eventType, err := h.eventTypesRepo.GetBySlug(r.Context(), slug)
+	user, err := h.usersRepo.GetByUsername(r.Context(), username)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	eventType, err := h.eventTypesRepo.GetByUserIDAndSlug(r.Context(), user.ID, slug)
 	if err != nil {
 		http.Error(w, "Event type not found", http.StatusNotFound)
 		return
@@ -155,17 +156,15 @@ func (h *PublicHandler) CreatePublicBooking(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	response := PublicBookingResponse{
+	writeJSON(w, http.StatusOK, PublicBookingResponse{
 		BookingID:   booking.ID,
 		StartsAt:    booking.StartsAt,
 		CancelToken: booking.CancelToken,
-	}
-
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func (h *PublicHandler) GetCancelInfo(w http.ResponseWriter, r *http.Request) {
-	token := r.URL.Path[len("/api/public/cancel/"):]
+	token := chi.URLParam(r, "token")
 
 	booking, err := h.bookingsRepo.GetByCancelToken(r.Context(), token)
 	if err != nil {
@@ -185,20 +184,18 @@ func (h *PublicHandler) GetCancelInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"candidate_name":         booking.CandidateName,
 		"starts_at":              booking.StartsAt,
 		"duration_min":           eventType.DurationMin,
 		"event_type_title":       eventType.Title,
 		"recruiter_display_name": user.DisplayName,
 		"status":                 booking.Status,
-	}
-
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func (h *PublicHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
-	token := r.URL.Path[len("/api/public/cancel/"):]
+	token := chi.URLParam(r, "token")
 
 	err := h.bookingService.CancelBooking(r.Context(), token)
 	if err != nil {
@@ -206,9 +203,7 @@ func (h *PublicHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"ok": true,
-	}
-
-	json.NewEncoder(w).Encode(response)
+	})
 }

@@ -23,6 +23,21 @@ export const useBookingsStore = defineStore('bookings', {
       }
     },
 
+    async cancelBooking(booking) {
+      if (!booking?.id) {
+        this.error = 'Нет id встречи'
+        return false
+      }
+      try {
+        await bookings.cancelBooking(booking.id)
+        this.bookings = this.bookings.filter(b => b.id !== booking.id)
+        return true
+      } catch (error) {
+        this.error = error.response?.data?.error || 'Не удалось отменить встречу'
+        return false
+      }
+    },
+
     clearBookings() {
       this.bookings = []
     }

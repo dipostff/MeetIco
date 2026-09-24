@@ -39,8 +39,12 @@
             <div class="candidate-name">{{ booking.candidate_name }}</div>
             <div class="candidate-email">{{ booking.candidate_email }}</div>
           </div>
-          <button class="btn btn-ghost btn-sm" @click="cancelBooking(booking)">
-            Отменить
+          <button
+            class="btn btn-ghost btn-sm"
+            :disabled="cancellingId === booking.id"
+            @click="cancelBooking(booking)"
+          >
+            {{ cancellingId === booking.id ? 'Отмена...' : 'Отменить' }}
           </button>
         </div>
       </div>
@@ -49,13 +53,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useBookingsStore } from '@/stores/bookings'
 import { useAuthStore } from '@/stores/auth'
+import { useEventTypesStore } from '@/stores/eventTypes'
 import OnboardingBanner from '@/components/OnboardingBanner.vue'
 
+const router = useRouter()
 const bookingsStore = useBookingsStore()
 const authStore = useAuthStore()
+const eventTypesStore = useEventTypesStore()
 
 const groupedBookings = computed(() => {
   const today = new Date()
@@ -96,24 +104,56 @@ const formatDate = (dateStr) => {
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 
-const copyLink = () => {
+const copyLink = async () => {
+  if (!authStore.user) {
+    await authStore.fetchUser()
+  }
+
   const username = authStore.user?.username
-  if (username) {
-    const link = `${window.location.origin}/book/${username}/30min`
-    navigator.clipboard.writeText(link)
+  if (!username) {
+    alert('Сначала укажите username в Настройках')
+    router.push('/dashboard/settings')
+    return
+  }
+
+  if (!eventTypesStore.eventTypes.length) {
+    await eventTypesStore.fetchEventTypes()
+  }
+
+  const eventType = eventTypesStore.eventTypes.find(et => et.is_active) || eventTypesStore.eventTypes[0]
+  if (!eventType) {
+    alert('Сначала создайте тип встречи в разделе «Мои ссылки»')
+    router.push('/dashboard/event-types')
+    return
+  }
+
+  const link = `${window.location.origin}/book/${username}/${eventType.slug}`
+  try {
+    await navigator.clipboard.writeText(link)
     alert('Ссылка скопирована!')
+  } catch {
+    prompt('Скопируйте ссылку вручную:', link)
   }
 }
+
+const cancellingId = ref(null)
 
 const cancelBooking = async (booking) => {
-  if (confirm(`Отменить встречу с ${booking.candidate_name}?`)) {
-    // TODO: Implement cancellation
-    alert('Функция отмены будет реализована позже')
+  if (cancellingId.value) return
+  cancellingId.value = booking.id
+  const ok = await bookingsStore.cancelBooking(booking)
+  cancellingId.value = null
+  if (!ok) {
+    alert(bookingsStore.error || 'Не удалось отменить встречу')
   }
 }
 
-onMounted(() => {
-  bookingsStore.fetchBookings()
+onMounted(async () => {
+  await Promise.all([
+    bookingsStore.fetchBookings(),
+    eventTypesStore.fetchEventTypes(),
+    authStore.user ? Promise.resolve() : authStore.fetchUser()
+  ])
 })
 </script>
 
