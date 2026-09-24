@@ -24,13 +24,21 @@ func (h *ScheduleHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	schedule, err := h.schedulesRepo.GetByUserID(r.Context(), userID)
 	if err != nil {
-		http.Error(w, "Schedule not found", http.StatusNotFound)
+		writeJSON(w, http.StatusOK, ScheduleResponse{
+			Timezone:    "Europe/Moscow",
+			WeeklyHours: map[string][][]string{},
+		})
 		return
 	}
 
-	json.NewEncoder(w).Encode(ScheduleResponse{
+	weeklyHours := schedule.WeeklyHours
+	if weeklyHours == nil {
+		weeklyHours = map[string][][]string{}
+	}
+
+	writeJSON(w, http.StatusOK, ScheduleResponse{
 		Timezone:    schedule.Timezone,
-		WeeklyHours: schedule.WeeklyHours,
+		WeeklyHours: weeklyHours,
 	})
 }
 
@@ -59,8 +67,13 @@ func (h *ScheduleHandler) UpdateSchedule(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	json.NewEncoder(w).Encode(ScheduleResponse{
+	weeklyHours := updatedSchedule.WeeklyHours
+	if weeklyHours == nil {
+		weeklyHours = map[string][][]string{}
+	}
+
+	writeJSON(w, http.StatusOK, ScheduleResponse{
 		Timezone:    updatedSchedule.Timezone,
-		WeeklyHours: updatedSchedule.WeeklyHours,
+		WeeklyHours: weeklyHours,
 	})
 }

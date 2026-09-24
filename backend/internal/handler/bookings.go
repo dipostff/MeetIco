@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"meetico/internal/model"
 	"meetico/internal/repo"
 )
 
@@ -18,10 +18,10 @@ func NewBookingsHandler(bookingsRepo *repo.BookingsRepo) *BookingsHandler {
 func (h *BookingsHandler) GetBookings(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	bookings, err := h.bookingsRepo.GetByUserID(r.Context(), userID)
-	if err != nil {
-		http.Error(w, "Failed to get bookings", http.StatusInternalServerError)
+	if err != nil || bookings == nil {
+		writeJSON(w, http.StatusOK, []*model.Booking{})
 		return
 	}
 
-	json.NewEncoder(w).Encode(bookings)
+	writeJSON(w, http.StatusOK, bookings)
 }

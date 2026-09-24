@@ -42,7 +42,7 @@ func (r *BookingsRepo) GetByUserID(ctx context.Context, userID string) ([]*model
 	}
 	defer rows.Close()
 
-	var bookings []*model.Booking
+	bookings := make([]*model.Booking, 0)
 	for rows.Next() {
 		var b model.Booking
 		err := rows.Scan(
@@ -72,7 +72,7 @@ func (r *BookingsRepo) GetByEventTypeAndDate(ctx context.Context, eventTypeID st
 	}
 	defer rows.Close()
 
-	var bookings []*model.Booking
+	bookings := make([]*model.Booking, 0)
 	for rows.Next() {
 		var b model.Booking
 		err := rows.Scan(
@@ -103,7 +103,7 @@ func (r *BookingsRepo) GetByUserIDAndDate(ctx context.Context, userID string, da
 	}
 	defer rows.Close()
 
-	var bookings []*model.Booking
+	bookings := make([]*model.Booking, 0)
 	for rows.Next() {
 		var b model.Booking
 		err := rows.Scan(

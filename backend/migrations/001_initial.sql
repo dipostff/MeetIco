@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
@@ -53,3 +54,14 @@ CREATE TABLE bookings (
 CREATE INDEX bookings_event_type_starts_idx ON bookings(event_type_id, starts_at);
 CREATE INDEX bookings_cancel_token_idx      ON bookings(cancel_token);
 CREATE INDEX event_types_slug_idx           ON event_types(slug);
+
+-- +goose Down
+DROP INDEX IF EXISTS event_types_slug_idx;
+DROP INDEX IF EXISTS bookings_cancel_token_idx;
+DROP INDEX IF EXISTS bookings_event_type_starts_idx;
+DROP TABLE IF EXISTS bookings;
+DROP TABLE IF EXISTS event_types;
+DROP TABLE IF EXISTS schedules;
+DROP INDEX IF EXISTS users_username_idx;
+DROP TABLE IF EXISTS users;
+DROP EXTENSION IF EXISTS "pgcrypto";

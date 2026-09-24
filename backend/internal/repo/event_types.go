@@ -38,7 +38,7 @@ func (r *EventTypesRepo) GetByUserID(ctx context.Context, userID string) ([]*mod
 	}
 	defer rows.Close()
 
-	var eventTypes []*model.EventType
+	eventTypes := make([]*model.EventType, 0)
 	for rows.Next() {
 		var et model.EventType
 		err := rows.Scan(

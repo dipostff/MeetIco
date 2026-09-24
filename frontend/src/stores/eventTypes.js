@@ -14,7 +14,7 @@ export const useEventTypesStore = defineStore('eventTypes', {
       this.error = null
       try {
         const response = await eventTypes.getEventTypes()
-        this.eventTypes = response.data
+        this.eventTypes = Array.isArray(response.data) ? response.data : []
       } catch (error) {
         this.error = error.response?.data?.error || 'Failed to fetch event types'
         this.eventTypes = []

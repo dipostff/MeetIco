@@ -122,12 +122,13 @@ func (h *PublicHandler) GetPublicSlots(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get slots", http.StatusInternalServerError)
 		return
 	}
-
-	response := map[string]interface{}{
-		"slots": slots,
+	if slots == nil {
+		slots = []string{}
 	}
 
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"slots": slots,
+	})
 }
 
 func (h *PublicHandler) CreatePublicBooking(w http.ResponseWriter, r *http.Request) {

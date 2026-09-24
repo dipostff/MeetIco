@@ -14,7 +14,7 @@ export const useBookingsStore = defineStore('bookings', {
       this.error = null
       try {
         const response = await bookings.getBookings()
-        this.bookings = response.data
+        this.bookings = Array.isArray(response.data) ? response.data : []
       } catch (error) {
         this.error = error.response?.data?.error || 'Failed to fetch bookings'
         this.bookings = []

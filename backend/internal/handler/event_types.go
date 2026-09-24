@@ -19,12 +19,12 @@ func NewEventTypesHandler(eventTypesRepo *repo.EventTypesRepo) *EventTypesHandle
 func (h *EventTypesHandler) GetEventTypes(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	eventTypes, err := h.eventTypesRepo.GetByUserID(r.Context(), userID)
-	if err != nil {
-		http.Error(w, "Failed to get event types", http.StatusInternalServerError)
+	if err != nil || eventTypes == nil {
+		writeJSON(w, http.StatusOK, []*model.EventType{})
 		return
 	}
 
-	json.NewEncoder(w).Encode(eventTypes)
+	writeJSON(w, http.StatusOK, eventTypes)
 }
 
 type CreateEventTypeRequest struct {
@@ -61,7 +61,7 @@ func (h *EventTypesHandler) CreateEventType(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	json.NewEncoder(w).Encode(eventType)
+	writeJSON(w, http.StatusOK, eventType)
 }
 
 type UpdateEventTypeRequest struct {
@@ -104,7 +104,7 @@ func (h *EventTypesHandler) UpdateEventType(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	json.NewEncoder(w).Encode(updatedEventType)
+	writeJSON(w, http.StatusOK, updatedEventType)
 }
 
 func (h *EventTypesHandler) DeleteEventType(w http.ResponseWriter, r *http.Request) {

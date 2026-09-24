@@ -20,9 +20,11 @@ func NewUsersRepo(pool *pgxpool.Pool) *UsersRepo {
 func (r *UsersRepo) Create(ctx context.Context, email, passwordHash, displayName string) (*model.User, error) {
 	var user model.User
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO users (email, password_hash, display_name) 
-		 VALUES ($1, $2, $3) 
-		 RETURNING id, email, password_hash, display_name, username, bio, photo_url, telegram_chat_id, plan, created_at`,
+		`INSERT INTO users (email, password_hash, display_name)
+		 VALUES ($1, $2, $3)
+		 RETURNING id, email, password_hash, display_name,
+		          COALESCE(username, ''), COALESCE(bio, ''), COALESCE(photo_url, ''),
+		          COALESCE(telegram_chat_id, ''), plan, created_at`,
 		email, passwordHash, displayName,
 	).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.DisplayName,
@@ -38,9 +40,12 @@ func (r *UsersRepo) Create(ctx context.Context, email, passwordHash, displayName
 func (r *UsersRepo) GetByID(ctx context.Context, id string) (*model.User, error) {
 	var user model.User
 	err := r.pool.QueryRow(ctx,
-		`SELECT u.id, u.email, u.password_hash, u.display_name, u.username, u.bio, u.photo_url, u.telegram_chat_id, u.plan, u.created_at, s.timezone 
-		 FROM users u 
-		 LEFT JOIN schedules s ON s.user_id = u.id 
+		`SELECT u.id, u.email, u.password_hash, u.display_name,
+		        COALESCE(u.username, ''), COALESCE(u.bio, ''), COALESCE(u.photo_url, ''),
+		        COALESCE(u.telegram_chat_id, ''), u.plan, u.created_at,
+		        COALESCE(s.timezone, 'Europe/Moscow')
+		 FROM users u
+		 LEFT JOIN schedules s ON s.user_id = u.id
 		 WHERE u.id = $1`,
 		id,
 	).Scan(
@@ -57,9 +62,12 @@ func (r *UsersRepo) GetByID(ctx context.Context, id string) (*model.User, error)
 func (r *UsersRepo) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
 	err := r.pool.QueryRow(ctx,
-		`SELECT u.id, u.email, u.password_hash, u.display_name, u.username, u.bio, u.photo_url, u.telegram_chat_id, u.plan, u.created_at, s.timezone 
-		 FROM users u 
-		 LEFT JOIN schedules s ON s.user_id = u.id 
+		`SELECT u.id, u.email, u.password_hash, u.display_name,
+		        COALESCE(u.username, ''), COALESCE(u.bio, ''), COALESCE(u.photo_url, ''),
+		        COALESCE(u.telegram_chat_id, ''), u.plan, u.created_at,
+		        COALESCE(s.timezone, 'Europe/Moscow')
+		 FROM users u
+		 LEFT JOIN schedules s ON s.user_id = u.id
 		 WHERE u.email = $1`,
 		email,
 	).Scan(
@@ -76,9 +84,12 @@ func (r *UsersRepo) GetByEmail(ctx context.Context, email string) (*model.User, 
 func (r *UsersRepo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	var user model.User
 	err := r.pool.QueryRow(ctx,
-		`SELECT u.id, u.email, u.password_hash, u.display_name, u.username, u.bio, u.photo_url, u.telegram_chat_id, u.plan, u.created_at, s.timezone 
-		 FROM users u 
-		 LEFT JOIN schedules s ON s.user_id = u.id 
+		`SELECT u.id, u.email, u.password_hash, u.display_name,
+		        COALESCE(u.username, ''), COALESCE(u.bio, ''), COALESCE(u.photo_url, ''),
+		        COALESCE(u.telegram_chat_id, ''), u.plan, u.created_at,
+		        COALESCE(s.timezone, 'Europe/Moscow')
+		 FROM users u
+		 LEFT JOIN schedules s ON s.user_id = u.id
 		 WHERE u.username = $1`,
 		username,
 	).Scan(
